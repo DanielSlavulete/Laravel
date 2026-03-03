@@ -47,4 +47,5 @@ class Socio extends Model
     {
         return $this->hasMany(Cuota::class);
     }
+    
 }

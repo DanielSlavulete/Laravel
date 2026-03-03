@@ -30,10 +30,12 @@ class SolicitudInfolist
                     ->numeric()
                     ->placeholder('-'),
                 IconEntry::make('hijo_down')
-                    ->boolean(),
+                    ->boolean()
+                    ->visible(fn ($record) => (bool) $record->tiene_hijos),
                 TextEntry::make('fecha_nacimiento_hijo_down')
                     ->date()
-                    ->placeholder('-'),
+                    ->placeholder('-')
+                    ->visible(fn ($record) => (bool) $record->tiene_hijos && (bool) $record->hijo_down),
                 TextEntry::make('tipo_socio'),
                 TextEntry::make('estado'),
                 TextEntry::make('motivo_rechazo')

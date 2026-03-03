@@ -8,6 +8,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 
 class SocioForm
 {
@@ -76,10 +77,20 @@ class SocioForm
                     ->maxLength(80),
 
                 Toggle::make('tiene_hijos')
+                    ->label('¿Tiene hijos?')
                     ->required()
-                    ->live(),
+                    ->live()
+                    ->afterStateUpdated(function (Set $set, $state) {
+                        if (! $state) {
+                            // si NO tiene hijos, limpiamos dependientes
+                            $set('numero_hijos', null);
+                            $set('hijo_down', false);
+                            $set('fecha_nacimiento_hijo_down', null);
+                        }
+                    }),
 
                 TextInput::make('numero_hijos')
+                    ->label('Número de hijos')
                     ->numeric()
                     ->minValue(1)
                     ->maxValue(20)
@@ -87,12 +98,20 @@ class SocioForm
                     ->required(fn (Get $get) => (bool) $get('tiene_hijos')),
 
                 Toggle::make('hijo_down')
-                    ->required()
-                    ->live(),
+                    ->label('¿Algún hijo con síndrome de Down?')
+                    ->visible(fn (Get $get) => (bool) $get('tiene_hijos'))
+                    ->required(fn (Get $get) => (bool) $get('tiene_hijos'))
+                    ->live()
+                    ->afterStateUpdated(function (Set $set, $state) {
+                        if (! $state) {
+                            $set('fecha_nacimiento_hijo_down', null);
+                        }
+                    }),
 
                 DatePicker::make('fecha_nacimiento_hijo_down')
-                    ->visible(fn (Get $get) => (bool) $get('hijo_down'))
-                    ->required(fn (Get $get) => (bool) $get('hijo_down')),
+                    ->label('Fecha nacimiento hijo/a con Down')
+                    ->visible(fn (Get $get) => (bool) $get('tiene_hijos') && (bool) $get('hijo_down'))
+                    ->required(fn (Get $get) => (bool) $get('tiene_hijos') && (bool) $get('hijo_down')),
 
                 Select::make('tipo_socio')
                     ->required()
