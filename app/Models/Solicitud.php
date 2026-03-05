@@ -11,6 +11,7 @@ class Solicitud extends Model
     protected $fillable = [
         'nombre',
         'apellidos',
+        'email',
         'fecha_nacimiento',
         'telefono',
         'tipo_documento',
