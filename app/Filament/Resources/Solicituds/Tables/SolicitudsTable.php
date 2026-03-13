@@ -13,6 +13,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class SolicitudsTable
@@ -21,30 +22,118 @@ class SolicitudsTable
     {
         return $table
             ->columns([
-                TextColumn::make('nombre')->searchable(),
-                TextColumn::make('apellidos')->searchable(),
-                TextColumn::make('fecha_nacimiento')->date()->sortable(),
-                TextColumn::make('telefono')->searchable(),
-                TextColumn::make('tipo_documento')->searchable(),
-                TextColumn::make('numero_documento')->searchable(),
-                TextColumn::make('direccion')->searchable(),
-                TextColumn::make('ciudad')->searchable(),
-                TextColumn::make('provincia')->searchable(),
-                TextColumn::make('codigo_postal')->searchable(),
-                TextColumn::make('pais')->searchable(),
-                IconColumn::make('tiene_hijos')->boolean(),
-                TextColumn::make('numero_hijos')->numeric()->sortable(),
-                IconColumn::make('hijo_down')->boolean(),
-                TextColumn::make('fecha_nacimiento_hijo_down')->date()->sortable(),
-                TextColumn::make('tipo_socio')->searchable(),
-                TextColumn::make('estado')->searchable(),
-                TextColumn::make('procesada_por')->numeric()->sortable(),
-                TextColumn::make('procesada_en')->dateTime()->sortable(),
-                TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('nombre')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('apellidos')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('email')
+                    ->label('Correo electrónico')
+                    ->searchable()
+                    ->copyable()
+                    ->toggleable(),
+
+                TextColumn::make('fecha_nacimiento')
+                    ->date()
+                    ->sortable(),
+
+                TextColumn::make('telefono')
+                    ->searchable(),
+
+                TextColumn::make('tipo_documento')
+                    ->searchable(),
+
+                TextColumn::make('numero_documento')
+                    ->label('Documento')
+                    ->searchable(),
+
+                TextColumn::make('direccion')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('ciudad')
+                    ->searchable(),
+
+                TextColumn::make('provincia')
+                    ->searchable(),
+
+                TextColumn::make('codigo_postal')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('pais')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                IconColumn::make('tiene_hijos')
+                    ->boolean(),
+
+                TextColumn::make('numero_hijos')
+                    ->numeric()
+                    ->sortable(),
+
+                IconColumn::make('hijo_down')
+                    ->boolean(),
+
+                TextColumn::make('fecha_nacimiento_hijo_down')
+                    ->date()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('tipo_socio')
+                    ->badge()
+                    ->searchable(),
+
+                TextColumn::make('estado')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'pendiente' => 'warning',
+                        'aprobada' => 'success',
+                        'rechazada' => 'danger',
+                        default => 'gray',
+                    })
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('procesada_por')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('procesada_en')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('estado')
+                    ->label('Estado')
+                    ->options([
+                        'pendiente' => 'Pendiente',
+                        'aprobada' => 'Aprobada',
+                        'rechazada' => 'Rechazada',
+                    ]),
+
+                SelectFilter::make('tipo_socio')
+                    ->label('Tipo de socio')
+                    ->options([
+                        'honorario' => 'Honorario',
+                        'colaborador' => 'Colaborador',
+                        'numerario' => 'Numerario',
+                    ]),
             ])
             ->recordActions([
                 ViewAction::make(),

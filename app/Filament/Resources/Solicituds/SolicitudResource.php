@@ -20,6 +20,10 @@ class SolicitudResource extends Resource
 {
     protected static ?string $model = Solicitud::class;
 
+    protected static ?string $navigationLabel = 'Solicitudes';
+
+    protected static ?string $pluralModelLabel = 'Solicitudes';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'nombre';

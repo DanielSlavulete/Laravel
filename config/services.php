@@ -34,5 +34,9 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    
+    'wordpress' => [
+        'api_key' => env('WORDPRESS_API_KEY'),
+    ]
 
 ];

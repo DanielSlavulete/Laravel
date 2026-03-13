@@ -3,81 +3,118 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreSolicitudRequest;
+use App\Models\Socio;
 use App\Models\Solicitud;
-use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 
 class SolicitudController extends Controller
 {
-    public function store(Request $request)
+    public function store(StoreSolicitudRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'name_1_first_name' => 'required|string|max:100',
-            'name_1_last_name'  => 'required|string|max:150',
-            'email_1'           => 'nullable|email|max:150',
-            'date_1'            => 'required|string', // d-m-Y
-            'phone_1'           => 'required|string|max:30',
+        // Si Forminator está haciendo la prueba del webhook, no intentamos crear solicitud
+        if ($request->header('x-hook-test') === 'true') {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Webhook test recibido correctamente.',
+            ], 200);
+        }
 
-            'radio_1'           => 'required|in:dni,nie,pasaporte',
-            'text_1'            => 'required|string|max:20',
+        $validated = $request->validated();
 
-            'address_1_street_address' => 'required|string|max:200',
-            'address_1_city'           => 'required|string|max:100',
-            'address_1_state'          => 'required|string|max:100',
-            'address_1_zip'            => 'required|string|max:15',
-            'address_1_country'        => 'required|string|max:80',
+        $tieneHijos = $validated['radio_2'] === '1';
+        $hijoDown = ($validated['radio_3'] ?? null) === '1';
 
-            'radio_2'   => 'required|in:0,1',      // tiene_hijos
-            'number_1'  => 'nullable|integer|min:1|max:20',
+        $fechaNacimientoSolicitante = Carbon::createFromFormat(
+            'd-m-Y',
+            $validated['date_1']
+        )->format('Y-m-d');
 
-            'radio_3'   => 'required|in:0,1',      // hijo_down
-            'date_2'    => 'nullable|string',      // d-m-Y si aplica
+        $numeroHijos = $tieneHijos && ! empty($validated['number_1'])
+            ? (int) $validated['number_1']
+            : null;
 
-            'radio_4'   => 'required|in:honorario,colaborador,numerario',
-        ]);
+        $fechaNacimientoHijo = $hijoDown && ! empty($validated['date_2'])
+            ? Carbon::createFromFormat('d-m-Y', $validated['date_2'])->format('Y-m-d')
+            : null;
 
-        $tieneHijos = ((int) $data['radio_2']) === 1;
-        $hijoDown   = ((int) $data['radio_3']) === 1;
+        $telefonoNormalizado = $this->normalizarTelefono($validated['phone_1'] ?? null);
+        $documentoNormalizado = $this->normalizarDocumento($validated['text_1'] ?? null);
+        $emailNormalizado = mb_strtolower(trim($validated['email_1']));
 
-        $fechaNacimiento = Carbon::createFromFormat('d-m-Y', $data['date_1'])->startOfDay();
+        // Comprobar duplicados en solicitudes
+        $duplicadoSolicitud = Solicitud::where('numero_documento', $documentoNormalizado)
+            ->orWhere('email', $emailNormalizado)
+            ->exists();
 
-        $fechaNacimientoHijoDown = null;
-        if ($tieneHijos && $hijoDown && ! empty($data['date_2'])) {
-            $fechaNacimientoHijoDown = Carbon::createFromFormat('d-m-Y', $data['date_2'])->startOfDay();
+        if ($duplicadoSolicitud) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Ya existe una solicitud con este documento o correo electrónico.',
+            ], 409);
+        }
+
+        // Comprobar duplicados en socios
+        $duplicadoSocio = Socio::where('numero_documento', $documentoNormalizado)
+            ->orWhere('email', $emailNormalizado)
+            ->exists();
+
+        if ($duplicadoSocio) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Ya existe un socio con este documento o correo electrónico.',
+            ], 409);
         }
 
         $solicitud = Solicitud::create([
-            'nombre' => $data['name_1_first_name'],
-            'apellidos' => $data['name_1_last_name'],
-            'email' => $data['email_1'] ?? null,
-            'fecha_nacimiento' => $fechaNacimiento,
-            'telefono' => $data['phone_1'],
+            'nombre' => trim($validated['name_1_first_name']),
+            'apellidos' => trim($validated['name_1_last_name']),
+            'email' => $emailNormalizado,
+            'fecha_nacimiento' => $fechaNacimientoSolicitante,
+            'telefono' => $telefonoNormalizado,
 
-            'tipo_documento' => $data['radio_1'],
-            'numero_documento' => $data['text_1'],
+            'tipo_documento' => $validated['radio_1'],
+            'numero_documento' => $documentoNormalizado,
 
-            'direccion' => $data['address_1_street_address'],
-            'ciudad' => $data['address_1_city'],
-            'provincia' => $data['address_1_state'],
-            'codigo_postal' => $data['address_1_zip'],
-            'pais' => $data['address_1_country'],
+            'direccion' => trim($validated['address_1_street_address']),
+            'ciudad' => trim($validated['address_1_city']),
+            'provincia' => trim($validated['address_1_state']),
+            'codigo_postal' => trim($validated['address_1_zip']),
+            'pais' => trim($validated['address_1_country']),
 
-            'tiene_hijos' => $tieneHijos,
-            'numero_hijos' => $tieneHijos ? ($data['number_1'] ?? null) : null,
+            'tiene_hijos' => $tieneHijos ? 'true' : 'false',
+            'numero_hijos' => $numeroHijos,
+            'hijo_down' => $hijoDown ? 'true' : 'false',
+            'fecha_nacimiento_hijo_down' => $fechaNacimientoHijo,
 
-            'hijo_down' => $tieneHijos ? $hijoDown : false,
-            'fecha_nacimiento_hijo_down' => $fechaNacimientoHijoDown,
-
-            'tipo_socio' => $data['radio_4'],
-
-            'estado' => 'pendiente', // si tu tabla lo tiene
+            'tipo_socio' => $validated['radio_4'],
+            'estado' => 'pendiente',
         ]);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Solicitud creada correctamente',
-            'id' => $solicitud->id,
+            'ok' => true,
+            'message' => 'Solicitud recibida correctamente.',
+            'solicitud_id' => $solicitud->id,
         ], 201);
     }
+
+    private function normalizarTelefono(?string $telefono): ?string
+    {
+        if (! $telefono) {
+        }
+
+        $telefono = trim($telefono);
+
+        return preg_replace('/(?!^\+)[^\d]/', '', $telefono) ?: null;
+    }
+
+    private function normalizarDocumento(?string $documento): ?string
+    {
+        if (! $documento) {
+            return null;
+        }
+
+        return strtoupper(trim($documento));
+    }
 }
-   

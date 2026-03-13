@@ -12,6 +12,7 @@ class Socio extends Model
         'solicitud_id',
         'nombre',
         'apellidos',
+        'email',
         'fecha_nacimiento',
         'telefono',
         'tipo_documento',

@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Models\Solicitud;
 use App\Models\Socio;
+use App\Models\Cuota;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -11,8 +12,8 @@ class AprobarSolicitud
 {
     public function handle(Solicitud $solicitud, int $userId): Socio
     {
-        // 1) Si esta solicitud ya tiene socio creado, devolvemos ese socio
         $existingBySolicitud = Socio::where('solicitud_id', $solicitud->id)->first();
+
         if ($existingBySolicitud) {
             if ($solicitud->estado !== 'aprobada') {
                 $solicitud->update([
@@ -26,8 +27,8 @@ class AprobarSolicitud
             return $existingBySolicitud;
         }
 
-        // 2) Si ya existe un socio con ese documento, no creamos otro
         $existingByDoc = Socio::where('numero_documento', $solicitud->numero_documento)->first();
+
         if ($existingByDoc) {
             throw new RuntimeException('Ya existe un socio con ese número de documento.');
         }
@@ -37,6 +38,7 @@ class AprobarSolicitud
                 'solicitud_id' => $solicitud->id,
                 'nombre' => $solicitud->nombre,
                 'apellidos' => $solicitud->apellidos,
+                'email' => $solicitud->email,
                 'fecha_nacimiento' => $solicitud->fecha_nacimiento,
                 'telefono' => $solicitud->telefono,
                 'tipo_documento' => $solicitud->tipo_documento,
@@ -46,14 +48,27 @@ class AprobarSolicitud
                 'provincia' => $solicitud->provincia,
                 'codigo_postal' => $solicitud->codigo_postal,
                 'pais' => $solicitud->pais,
-                'tiene_hijos' => $solicitud->tiene_hijos,
+                'tiene_hijos' => $solicitud->tiene_hijos ? 'true' : 'false',
                 'numero_hijos' => $solicitud->numero_hijos,
-                'hijo_down' => $solicitud->hijo_down,
+                'hijo_down' => $solicitud->hijo_down ? 'true' : 'false',
                 'fecha_nacimiento_hijo_down' => $solicitud->fecha_nacimiento_hijo_down,
                 'tipo_socio' => $solicitud->tipo_socio,
                 'estado' => 'activo',
                 'fecha_alta' => now(),
             ]);
+
+            $anioActual = now()->year;
+
+            Cuota::firstOrCreate(
+                [
+                    'socio_id' => $socio->id,
+                    'anio' => $anioActual,
+                ],
+                [
+                    'pagado' => 'false',
+                    'fecha_pago' => null,
+                ]
+            );
 
             $solicitud->update([
                 'estado' => 'aprobada',

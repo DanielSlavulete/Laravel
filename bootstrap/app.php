@@ -18,11 +18,16 @@ return Application::configure(basePath: dirname(__DIR__))
                  \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
                  \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
                  \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
-    );
+        );
+
+        $middleware->alias([
+            'wp.api.key' => \App\Http\Middleware\EnsureApiKeyIsValid::class,
+        ]);
+
     })
     ->withExceptions(function (Exceptions $exceptions): void {
 
-    // 1) Errores claros de conexión / DB caída
+    // Errores claros de conexión / DB caída
     $exceptions->render(function (\Illuminate\Database\ConnectionException $e, $request) {
         if (! config('app.debug')) {
             return response()->view('errors.db-down', [], 503);
@@ -47,7 +52,6 @@ return Application::configure(basePath: dirname(__DIR__))
         return null;
     });
 
-    // 2) Fallback: si el mensaje "huele" a DB caída
     $exceptions->render(function (\Throwable $e, $request) {
         if (config('app.debug')) {
             return null;
@@ -72,7 +76,6 @@ return Application::configure(basePath: dirname(__DIR__))
         return null;
     });
 
-    // 3) (Opcional pero recomendado en tu caso) Catch-all SOLO para /admin
     $exceptions->render(function (\Throwable $e, $request) {
         if (config('app.debug')) {
             return null;
