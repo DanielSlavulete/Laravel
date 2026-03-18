@@ -8,7 +8,8 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     zip \
     npm \
-    && docker-php-ext-install pdo pdo_pgsql pgsql zip \
+    libicu-dev \
+    && docker-php-ext-install pdo pdo_pgsql pgsql zip intl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
