@@ -17,15 +17,11 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
-
-COPY package*.json ./
-RUN if [ -f package.json ]; then npm install; fi
-
 COPY . .
 
-RUN if [ -f package.json ]; then npm run build; fi
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+RUN if [ -f package.json ]; then npm install && npm run build; fi
 
 RUN mkdir -p storage/framework/cache \
     storage/framework/sessions \
