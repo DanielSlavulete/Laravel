@@ -256,6 +256,12 @@ class SociosTable
                         ]);
                     }),
 
+                Action::make('recargar')
+                    ->label('Recargar tabla')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('gray')
+                    ->action(fn () => null),
+
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
