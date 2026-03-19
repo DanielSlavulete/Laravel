@@ -27,7 +27,7 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->profile()
             ->brandLogo(fn () => view('filament.components.brand'))
-            ->favicon(asset('images/faviconIM21.ico'))
+            ->favicon('/images/faviconIM21.ico')
             ->colors([
                 'primary' => Color::Amber,
             ])

@@ -76,9 +76,11 @@ class SolicitudsTable
                     ->sortable(),
 
                 IconColumn::make('hijo_down')
+                    ->label('¿Hijo con síndrome de Down?')
                     ->boolean(),
 
                 TextColumn::make('fecha_nacimiento_hijo_down')
+                    ->label('Fecha nacimiento hijo con sindrome de Down')
                     ->date()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
