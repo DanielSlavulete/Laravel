@@ -139,7 +139,6 @@ class SolicitudsTable
             ])
             ->recordActions([
                 ViewAction::make(),
-                EditAction::make(),
 
                 Action::make('aprobar')
                     ->label('Aprobar')
