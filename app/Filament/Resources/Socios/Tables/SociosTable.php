@@ -10,8 +10,8 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
 
 class SociosTable
 {
@@ -110,28 +110,14 @@ class SociosTable
                     ->sortable()
                     ->toggleable(),
 
-                ToggleColumn::make('cuota_pagada')
+                IconColumn::make('cuota_pagada_actual')
                     ->label('Cuota ' . now()->year)
+                    ->boolean()
                     ->getStateUsing(function ($record) {
-                        $anio = now()->year;
-
-                        $cuota = $record->cuotas()
-                            ->where('anio', $anio)
-                            ->first();
-
-                        return (bool) ($cuota?->pagado ?? false);
-                    })
-                    ->updateStateUsing(function ($record, bool $state) {
-                        $anio = now()->year;
-
-                        $cuota = $record->cuotas()->firstOrCreate(['anio' => $anio]);
-
-                        $cuota->pagado = $state;
-                        $cuota->fecha_pago = $state ? now() : null;
-                        $cuota->save();
-
-                        return $state;
-                }),
+                        return $record->cuotas()
+                            ->where('anio', now()->year)
+                            ->value('pagado') ?? false;
+                    }),
 
                 TextColumn::make('fecha_pago_cuota_actual')
                     ->label('Fecha pago')
@@ -158,6 +144,78 @@ class SociosTable
                 //
             ])
             ->recordActions([
+                
+                Action::make('toggle_cuota_actual')
+                    ->label(function ($record) {
+                        $pagada = $record->cuotas()
+                            ->where('anio', now()->year)
+                            ->value('pagado') ?? false;
+
+                        return $pagada ? 'Marcar no pagada' : 'Marcar pagada';
+                    })
+                    ->icon(function ($record) {
+                        $pagada = $record->cuotas()
+                            ->where('anio', now()->year)
+                            ->value('pagado') ?? false;
+
+                        return $pagada
+                            ? 'heroicon-o-x-circle'
+                            : 'heroicon-o-check-circle';
+                    })
+                    ->color(function ($record) {
+                        $pagada = $record->cuotas()
+                            ->where('anio', now()->year)
+                            ->value('pagado') ?? false;
+
+                        return $pagada ? 'danger' : 'success';
+                    })
+                    ->requiresConfirmation()
+                    ->modalHeading(function ($record) {
+                        $pagada = $record->cuotas()
+                            ->where('anio', now()->year)
+                            ->value('pagado') ?? false;
+
+                        return $pagada ? 'Marcar cuota como no pagada' : 'Marcar cuota como pagada';
+                    })
+                    ->modalDescription(function ($record) {
+                        $pagada = $record->cuotas()
+                            ->where('anio', now()->year)
+                            ->value('pagado') ?? false;
+
+                        return $pagada
+                            ? '¿Seguro que quieres marcar la cuota del año actual como no pagada?'
+                            : '¿Seguro que quieres marcar la cuota del año actual como pagada?';
+                    })
+                    ->modalSubmitActionLabel(function ($record) {
+                        $pagada = $record->cuotas()
+                            ->where('anio', now()->year)
+                            ->value('pagado') ?? false;
+
+                        return $pagada ? 'Sí, marcar no pagada' : 'Sí, marcar pagada';
+                    })
+                    ->action(function ($record) {
+                        $anio = now()->year;
+
+                        $cuota = $record->cuotas()->firstOrCreate(
+                            ['anio' => $anio],
+                            [
+                                'socio_id' => $record->id,
+                                'pagado' => false,
+                                'fecha_pago' => null,
+                            ]
+                        );
+
+                        $nuevoEstado = ! $cuota->pagado;
+
+                        DB::table('cuotas')
+                            ->where('id', $cuota->id)
+                            ->update([
+                                'pagado' => DB::raw($nuevoEstado ? 'true' : 'false'),
+                                'fecha_pago' => $nuevoEstado ? now() : null,
+                                'updated_at' => now(),
+                            ]);
+                    }),
+
                 Action::make('toggle_estado')
                     ->label(fn ($record) => $record->estado === 'activo' ? 'Desactivar' : 'Activar')
                     ->icon(fn ($record) => $record->estado === 'activo'
@@ -261,6 +319,7 @@ class SociosTable
                     ->icon('heroicon-o-arrow-path')
                     ->color('gray')
                     ->action(fn () => null),
+
 
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
