@@ -119,19 +119,19 @@ class SociosTable
                             ->where('anio', $anio)
                             ->first();
 
-                        return (bool) optional($cuota)->pagado;
+                        return (bool) ($cuota?->pagado ?? false);
                     })
                     ->updateStateUsing(function ($record, bool $state) {
                         $anio = now()->year;
 
                         $cuota = $record->cuotas()->firstOrCreate(['anio' => $anio]);
 
-                        $cuota->pagado = $state ? 'true' : 'false';
+                        $cuota->pagado = $state;
                         $cuota->fecha_pago = $state ? now() : null;
                         $cuota->save();
 
                         return $state;
-                    }),
+                }),
 
                 TextColumn::make('fecha_pago_cuota_actual')
                     ->label('Fecha pago')
