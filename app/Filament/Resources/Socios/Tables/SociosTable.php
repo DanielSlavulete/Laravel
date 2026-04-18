@@ -10,7 +10,10 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class SociosTable
@@ -122,10 +125,10 @@ class SociosTable
                 TextColumn::make('fecha_pago_cuota_actual')
                     ->label('Fecha pago')
                     ->getStateUsing(function ($record) {
-                        $anio = now()->year;
-
                         return optional(
-                            $record->cuotas()->where('anio', $anio)->first()
+                            $record->cuotas()
+                                ->where('anio', now()->year)
+                                ->first()
                         )->fecha_pago;
                     })
                     ->dateTime(),
@@ -141,10 +144,53 @@ class SociosTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('estado')
+                    ->options([
+                        'activo' => 'Activo',
+                        'inactivo' => 'Inactivo',
+                    ]),
+
+                SelectFilter::make('tipo_socio')
+                    ->options([
+                        'numerario' => 'Numerario',
+                        'colaborador' => 'Colaborador',
+                    ]),
+
+                TernaryFilter::make('tiene_hijos')
+                    ->label('Tiene hijos'),
+
+                SelectFilter::make('cuota_actual')
+                    ->label('Cuota ' . now()->year)
+                    ->options([
+                        'pagada' => 'Pagada',
+                        'no_pagada' => 'No pagada',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        $value = $data['value'] ?? null;
+                        $anio = now()->year;
+
+                        if ($value === 'pagada') {
+                            return $query->whereHas('cuotas', function (Builder $q) use ($anio) {
+                                $q->where('anio', $anio)
+                                  ->whereRaw('pagado = true');
+                            });
+                        }
+
+                        if ($value === 'no_pagada') {
+                            return $query->where(function (Builder $q) use ($anio) {
+                                $q->whereDoesntHave('cuotas', function (Builder $sub) use ($anio) {
+                                    $sub->where('anio', $anio);
+                                })->orWhereHas('cuotas', function (Builder $sub) use ($anio) {
+                                    $sub->where('anio', $anio)
+                                        ->whereRaw('pagado = false');
+                                });
+                            });
+                        }
+
+                        return $query;
+                    }),
             ])
             ->recordActions([
-                
                 Action::make('toggle_cuota_actual')
                     ->label(function ($record) {
                         $pagada = $record->cuotas()
@@ -251,16 +297,13 @@ class SociosTable
                     ->modalSubmitActionLabel('Sí, eliminar'),
             ])
             ->toolbarActions([
-
                 Action::make('exportar_socios_csv')
                     ->label('Exportar socios CSV')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->action(function () {
-
                         $filename = 'socios-' . now()->format('Y-m-d_H-i-s') . '.csv';
 
                         return response()->streamDownload(function () {
-
                             $handle = fopen('php://output', 'w');
 
                             fputcsv($handle, [
@@ -283,9 +326,7 @@ class SociosTable
                             ], ';');
 
                             Socio::query()->orderBy('id')->chunk(200, function ($socios) use ($handle) {
-
                                 foreach ($socios as $socio) {
-
                                     fputcsv($handle, [
                                         $socio->id,
                                         $socio->nombre,
@@ -308,7 +349,6 @@ class SociosTable
                             });
 
                             fclose($handle);
-
                         }, $filename, [
                             'Content-Type' => 'text/csv; charset=UTF-8',
                         ]);
@@ -319,7 +359,6 @@ class SociosTable
                     ->icon('heroicon-o-arrow-path')
                     ->color('gray')
                     ->action(fn () => null),
-
 
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

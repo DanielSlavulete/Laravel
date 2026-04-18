@@ -11,7 +11,9 @@ use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class CuotasTable
 {
@@ -60,7 +62,72 @@ class CuotasTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('anio')
+                    ->label('Año')
+                    ->options(
+                        Cuota::query()
+                            ->select('anio')
+                            ->distinct()
+                            ->orderByDesc('anio')
+                            ->pluck('anio', 'anio')
+                            ->toArray()
+                    ),
+
+                SelectFilter::make('pagado_estado')
+                    ->label('Pagada')
+                    ->options([
+                        'si' => 'Sí',
+                        'no' => 'No',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        $value = $data['value'] ?? null;
+
+                        if ($value === 'si') {
+                            return $query->whereRaw('pagado = true');
+                        }
+
+                        if ($value === 'no') {
+                            return $query->whereRaw('pagado = false');
+                        }
+
+                        return $query;
+                    }),
+
+                SelectFilter::make('tipo_socio')
+                    ->label('Tipo socio')
+                    ->options([
+                        'numerario' => 'Numerario',
+                        'colaborador' => 'Colaborador',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        $value = $data['value'] ?? null;
+
+                        if ($value) {
+                            return $query->whereHas('socio', function (Builder $q) use ($value) {
+                                $q->where('tipo_socio', $value);
+                            });
+                        }
+
+                        return $query;
+                    }),
+
+                SelectFilter::make('estado_socio')
+                    ->label('Estado socio')
+                    ->options([
+                        'activo' => 'Activo',
+                        'inactivo' => 'Inactivo',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        $value = $data['value'] ?? null;
+
+                        if ($value) {
+                            return $query->whereHas('socio', function (Builder $q) use ($value) {
+                                $q->where('estado', $value);
+                            });
+                        }
+
+                        return $query;
+                    }),
             ])
             ->recordActions([
                 EditAction::make(),
@@ -72,7 +139,6 @@ class CuotasTable
                     ->modalSubmitActionLabel('Sí, eliminar'),
             ])
             ->toolbarActions([
-
                 Action::make('generar_cuotas')
                     ->label('Generar cuotas ' . now()->year)
                     ->icon('heroicon-o-calendar')
@@ -82,7 +148,6 @@ class CuotasTable
                     ->modalDescription('Se generarán las cuotas del año actual para los socios que aún no la tengan.')
                     ->modalSubmitActionLabel('Generar')
                     ->action(function () {
-
                         \Artisan::call('cuotas:generar-anuales');
 
                         Notification::make()
@@ -95,11 +160,9 @@ class CuotasTable
                     ->label('Exportar cuotas CSV')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->action(function () {
-
                         $filename = 'cuotas-' . now()->format('Y-m-d_H-i-s') . '.csv';
 
                         return response()->streamDownload(function () {
-
                             $handle = fopen('php://output', 'w');
 
                             fputcsv($handle, [
@@ -118,9 +181,7 @@ class CuotasTable
                                 ->with('socio')
                                 ->orderBy('id')
                                 ->chunk(200, function ($cuotas) use ($handle) {
-
                                     foreach ($cuotas as $cuota) {
-
                                         fputcsv($handle, [
                                             $cuota->id,
                                             $cuota->socio_id,
@@ -136,17 +197,16 @@ class CuotasTable
                                 });
 
                             fclose($handle);
-
                         }, $filename, [
                             'Content-Type' => 'text/csv; charset=UTF-8',
                         ]);
                     }),
 
-                    Action::make('recargar')
-                        ->label('Recargar tabla')
-                        ->icon('heroicon-o-arrow-path')
-                        ->color('gray')
-                        ->action(fn () => null),
+                Action::make('recargar')
+                    ->label('Recargar tabla')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('gray')
+                    ->action(fn () => null),
 
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
