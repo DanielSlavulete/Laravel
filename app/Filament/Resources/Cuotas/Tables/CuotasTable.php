@@ -46,6 +46,11 @@ class CuotasTable
                     ->boolean()
                     ->sortable(),
 
+                TextColumn::make('cuantia')
+                    ->label('Cuantía')
+                    ->money('EUR')
+                    ->sortable(),
+
                 TextColumn::make('fecha_pago')
                     ->label('Fecha pago')
                     ->dateTime()
@@ -172,6 +177,7 @@ class CuotasTable
                                 'Apellidos',
                                 'Año',
                                 'Pagada',
+                                'Cuantía',
                                 'Fecha pago',
                                 'Creada',
                                 'Actualizada',
@@ -189,6 +195,7 @@ class CuotasTable
                                             $cuota->socio?->apellidos,
                                             $cuota->anio,
                                             $cuota->pagado ? 'Sí' : 'No',
+                                            $cuota->cuantia,
                                             $cuota->fecha_pago,
                                             $cuota->created_at,
                                             $cuota->updated_at,

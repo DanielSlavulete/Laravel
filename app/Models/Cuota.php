@@ -12,12 +12,14 @@ class Cuota extends Model
         'socio_id',
         'anio',
         'pagado',
+        'cuantia',
         'fecha_pago',
     ];
 
     protected $casts = [
         'anio' => 'integer',
         'pagado' => 'boolean',
+        'cuantia' => 'decimal:2',
         'fecha_pago' => 'datetime',
     ];
 

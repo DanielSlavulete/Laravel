@@ -8,6 +8,8 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -122,6 +124,16 @@ class SociosTable
                             ->value('pagado') ?? false;
                     }),
 
+                TextColumn::make('cuantia_cuota_actual')
+                    ->label('Cuantía')
+                    ->getStateUsing(function ($record) {
+                        return $record->cuotas()
+                            ->where('anio', now()->year)
+                            ->value('cuantia');
+                    })
+                    ->money('EUR')
+                    ->toggleable(),
+
                 TextColumn::make('fecha_pago_cuota_actual')
                     ->label('Fecha pago')
                     ->getStateUsing(function ($record) {
@@ -131,7 +143,7 @@ class SociosTable
                                 ->first()
                         )->fecha_pago;
                     })
-                    ->dateTime(),
+                    ->date(),
 
                 TextColumn::make('created_at')
                     ->dateTime()
@@ -172,7 +184,7 @@ class SociosTable
                         if ($value === 'pagada') {
                             return $query->whereHas('cuotas', function (Builder $q) use ($anio) {
                                 $q->where('anio', $anio)
-                                  ->whereRaw('pagado = true');
+                                    ->whereRaw('pagado = true');
                             });
                         }
 
@@ -191,7 +203,7 @@ class SociosTable
                     }),
             ])
             ->recordActions([
-                Action::make('toggle_cuota_actual')
+                Action::make('gestionar_cuota_actual')
                     ->label(function ($record) {
                         $pagada = $record->cuotas()
                             ->where('anio', now()->year)
@@ -215,13 +227,21 @@ class SociosTable
 
                         return $pagada ? 'danger' : 'success';
                     })
-                    ->requiresConfirmation()
+                    ->requiresConfirmation(function ($record) {
+                        $pagada = $record->cuotas()
+                            ->where('anio', now()->year)
+                            ->value('pagado') ?? false;
+
+                        return $pagada;
+                    })
                     ->modalHeading(function ($record) {
                         $pagada = $record->cuotas()
                             ->where('anio', now()->year)
                             ->value('pagado') ?? false;
 
-                        return $pagada ? 'Marcar cuota como no pagada' : 'Marcar cuota como pagada';
+                        return $pagada
+                            ? 'Marcar cuota como no pagada'
+                            : 'Registrar pago de cuota';
                     })
                     ->modalDescription(function ($record) {
                         $pagada = $record->cuotas()
@@ -230,34 +250,81 @@ class SociosTable
 
                         return $pagada
                             ? '¿Seguro que quieres marcar la cuota del año actual como no pagada?'
-                            : '¿Seguro que quieres marcar la cuota del año actual como pagada?';
+                            : 'Introduce la cuantía y la fecha real en la que se realizó el pago.';
                     })
                     ->modalSubmitActionLabel(function ($record) {
                         $pagada = $record->cuotas()
                             ->where('anio', now()->year)
                             ->value('pagado') ?? false;
 
-                        return $pagada ? 'Sí, marcar no pagada' : 'Sí, marcar pagada';
+                        return $pagada ? 'Sí, marcar no pagada' : 'Guardar pago';
                     })
-                    ->action(function ($record) {
+                    ->form(function ($record) {
+                        $pagada = $record->cuotas()
+                            ->where('anio', now()->year)
+                            ->value('pagado') ?? false;
+
+                        if ($pagada) {
+                            return [];
+                        }
+
+                        return [
+                            TextInput::make('cuantia')
+                                ->label('Cuantía (€)')
+                                ->numeric()
+                                ->required()
+                                ->minValue(0)
+                                ->step('0.01'),
+
+                            DatePicker::make('fecha_pago')
+                                ->label('Fecha de pago')
+                                ->required()
+                                ->default(now())
+                                ->native(false),
+                        ];
+                    })
+                    ->action(function ($record, array $data) {
                         $anio = now()->year;
 
-                        $cuota = $record->cuotas()->firstOrCreate(
-                            ['anio' => $anio],
-                            [
-                                'socio_id' => $record->id,
-                                'pagado' => false,
-                                'fecha_pago' => null,
-                            ]
-                        );
+                        $cuota = $record->cuotas()
+                            ->where('anio', $anio)
+                            ->first();
 
-                        $nuevoEstado = ! $cuota->pagado;
+                        if (! $cuota) {
+                            $cuotaId = DB::table('cuotas')->insertGetId([
+                                'socio_id' => $record->id,
+                                'anio' => $anio,
+                                'pagado' => DB::raw('false'),
+                                'cuantia' => null,
+                                'fecha_pago' => null,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+
+                            $cuota = $record->cuotas()
+                                ->where('id', $cuotaId)
+                                ->first();
+                        }
+
+                        if ($cuota->pagado) {
+                            DB::table('cuotas')
+                                ->where('id', $cuota->id)
+                                ->update([
+                                    'pagado' => DB::raw('false'),
+                                    'cuantia' => null,
+                                    'fecha_pago' => null,
+                                    'updated_at' => now(),
+                                ]);
+
+                            return;
+                        }
 
                         DB::table('cuotas')
                             ->where('id', $cuota->id)
                             ->update([
-                                'pagado' => DB::raw($nuevoEstado ? 'true' : 'false'),
-                                'fecha_pago' => $nuevoEstado ? now() : null,
+                                'pagado' => DB::raw('true'),
+                                'cuantia' => $data['cuantia'],
+                                'fecha_pago' => $data['fecha_pago'],
                                 'updated_at' => now(),
                             ]);
                     }),
