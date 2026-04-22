@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Socios\Tables;
 
-use App\Models\Socio;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -131,7 +130,11 @@ class SociosTable
                             ->where('anio', now()->year)
                             ->value('cuantia');
                     })
-                    ->money('EUR')
+                    ->formatStateUsing(
+                        fn ($state) => $state !== null
+                            ? number_format((float) $state, 2, ',', '.') . ' €'
+                            : null
+                    )
                     ->toggleable(),
 
                 TextColumn::make('fecha_pago_cuota_actual')
@@ -364,63 +367,6 @@ class SociosTable
                     ->modalSubmitActionLabel('Sí, eliminar'),
             ])
             ->toolbarActions([
-                Action::make('exportar_socios_csv')
-                    ->label('Exportar socios CSV')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->action(function () {
-                        $filename = 'socios-' . now()->format('Y-m-d_H-i-s') . '.csv';
-
-                        return response()->streamDownload(function () {
-                            $handle = fopen('php://output', 'w');
-
-                            fputcsv($handle, [
-                                'ID',
-                                'Nombre',
-                                'Apellidos',
-                                'Correo',
-                                'Telefono',
-                                'Tipo documento',
-                                'Documento',
-                                'Ciudad',
-                                'Provincia',
-                                'Tipo socio',
-                                'Estado',
-                                'Tiene hijos',
-                                'Numero hijos',
-                                'Hijo con síndrome Down',
-                                'Fecha nacimiento hijo Down',
-                                'Fecha alta',
-                            ], ';');
-
-                            Socio::query()->orderBy('id')->chunk(200, function ($socios) use ($handle) {
-                                foreach ($socios as $socio) {
-                                    fputcsv($handle, [
-                                        $socio->id,
-                                        $socio->nombre,
-                                        $socio->apellidos,
-                                        $socio->email,
-                                        $socio->telefono,
-                                        $socio->tipo_documento,
-                                        $socio->numero_documento,
-                                        $socio->ciudad,
-                                        $socio->provincia,
-                                        $socio->tipo_socio,
-                                        $socio->estado,
-                                        $socio->tiene_hijos ? 'Sí' : 'No',
-                                        $socio->numero_hijos,
-                                        $socio->hijo_down ? 'Sí' : 'No',
-                                        $socio->fecha_nacimiento_hijo_down,
-                                        $socio->fecha_alta,
-                                    ], ';');
-                                }
-                            });
-
-                            fclose($handle);
-                        }, $filename, [
-                            'Content-Type' => 'text/csv; charset=UTF-8',
-                        ]);
-                    }),
-
                 Action::make('recargar')
                     ->label('Recargar tabla')
                     ->icon('heroicon-o-arrow-path')

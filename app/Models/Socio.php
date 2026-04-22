@@ -39,6 +39,16 @@ class Socio extends Model
         'fecha_alta' => 'datetime',
     ];
 
+    public function setTieneHijosAttribute($value): void
+    {
+        $this->attributes['tiene_hijos'] = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
+    }
+
+    public function setHijoDownAttribute($value): void
+    {
+        $this->attributes['hijo_down'] = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
+    }
+
     public function solicitud()
     {
         return $this->belongsTo(Solicitud::class);
@@ -48,5 +58,4 @@ class Socio extends Model
     {
         return $this->hasMany(Cuota::class);
     }
-    
 }

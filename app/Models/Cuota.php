@@ -23,6 +23,11 @@ class Cuota extends Model
         'fecha_pago' => 'datetime',
     ];
 
+    public function setPagadoAttribute($value): void
+    {
+        $this->attributes['pagado'] = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
+    }
+
     public function socio()
     {
         return $this->belongsTo(Socio::class);
