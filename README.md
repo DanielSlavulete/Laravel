@@ -1,6 +1,6 @@
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-# Membership Management System
+# Sistema de Gestión de Socios
 
 Aplicación web desarrollada con **Laravel**, **Filament** y **PostgreSQL(Supabase)** para la gestión integral de socios, solicitudes y cuotas de una asociación.
 
@@ -18,15 +18,15 @@ A través del panel de administración construido con Filament, los administrado
 * Exportar datos a CSV para migraciones, copias de seguridad o análisis en herramientas como Excel.
 * Administrar toda la información desde una interfaz moderna, rápida e intuitiva.
 
-## Architecture
+## Arquitectura
 
 * **Backend:** Laravel
-* **Admin Panel:** Filament
-* **Database:** Supabase (PostgreSQL)
-* **Frontend Integration:** WordPress → API REST → Laravel
-* **Views:** Blade + Filament Components
+* **Panel de administración:** Filament
+* **Base de datos:** Supabase (PostgreSQL)
+* **Integración frontend:** WordPress → API REST → Laravel
+* **Vistas:** Blade + componentes de Filament
 
-## Workflow
+## Flujo de trabajo
 
 1. Un usuario completa el formulario de inscripción en la web.
 2. WordPress envía los datos a la API de Laravel.
@@ -35,7 +35,7 @@ A través del panel de administración construido con Filament, los administrado
 5. Si es aprobada, se crea automáticamente un nuevo socio.
 6. El socio puede ser gestionado junto con sus cuotas y documentación asociada.
 
-## Features
+## Características
 
 ✅ Gestión de solicitudes
 
