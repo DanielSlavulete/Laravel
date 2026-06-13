@@ -1,59 +1,53 @@
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+# Membership Management System
 
-## About Laravel
+Aplicación web desarrollada con **Laravel**, **Filament** y **PostgreSQL(Supabase)** para la gestión integral de socios, solicitudes y cuotas de una asociación.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+La plataforma recibe información desde un sitio web externo desarrollado en WordPress mediante una API REST. Cuando un usuario completa el formulario de inscripción, sus datos son almacenados automáticamente como una **solicitud pendiente** dentro del sistema.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+A través del panel de administración construido con Filament, los administradores pueden:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+* Revisar solicitudes recibidas desde la web.
+* Aprobar o rechazar solicitudes de nuevos socios.
+* Convertir automáticamente solicitudes aprobadas en registros de socios.
+* Crear, editar, eliminar y gestionar socios manualmente.
+* Filtrar, ordenar y buscar información de forma eficiente.
+* Gestionar cuotas anuales y controlar su estado de pago.
+* Importar socios y cuotas desde archivos CSV.
+* Exportar datos a CSV para migraciones, copias de seguridad o análisis en herramientas como Excel.
+* Administrar toda la información desde una interfaz moderna, rápida e intuitiva.
 
-## Learning Laravel
+## Architecture
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+* **Backend:** Laravel
+* **Admin Panel:** Filament
+* **Database:** Supabase (PostgreSQL)
+* **Frontend Integration:** WordPress → API REST → Laravel
+* **Views:** Blade + Filament Components
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Workflow
 
-## Laravel Sponsors
+1. Un usuario completa el formulario de inscripción en la web.
+2. WordPress envía los datos a la API de Laravel.
+3. El sistema crea una solicitud pendiente.
+4. Un administrador revisa la solicitud.
+5. Si es aprobada, se crea automáticamente un nuevo socio.
+6. El socio puede ser gestionado junto con sus cuotas y documentación asociada.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Features
 
-### Premium Partners
+✅ Gestión de solicitudes
+✅ Gestión de socios
+✅ Control de cuotas anuales
+✅ Importación CSV
+✅ Exportación CSV
+✅ API REST
+✅ Integración con WordPress
+✅ PostgreSQL (Supabase)
+✅ Panel administrativo con Filament
+✅ Búsqueda, filtrado y ordenación avanzada
+✅ Validación y sanitización de datos  
+✅ Rate Limiting para prevención de spam y abuso
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Este proyecto ha sido diseñado para simplificar la administración de una asociacion, centralizando en una única plataforma la gestión de inscripciones, socios y pagos.
