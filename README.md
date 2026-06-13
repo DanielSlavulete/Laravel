@@ -38,16 +38,27 @@ A través del panel de administración construido con Filament, los administrado
 ## Features
 
 ✅ Gestión de solicitudes
+
 ✅ Gestión de socios
+
 ✅ Control de cuotas anuales
+
 ✅ Importación CSV
+
 ✅ Exportación CSV
+
 ✅ API REST
+
 ✅ Integración con WordPress
+
 ✅ PostgreSQL (Supabase)
+
 ✅ Panel administrativo con Filament
+
 ✅ Búsqueda, filtrado y ordenación avanzada
+
 ✅ Validación y sanitización de datos  
+
 ✅ Rate Limiting para prevención de spam y abuso
 
 Este proyecto ha sido diseñado para simplificar la administración de una asociacion, centralizando en una única plataforma la gestión de inscripciones, socios y pagos.
